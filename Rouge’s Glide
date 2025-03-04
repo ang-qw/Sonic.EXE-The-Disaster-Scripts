@@ -1,0 +1,308 @@
+local player = game.Players.LocalPlayer
+if game.PlaceId == 14722542056 then
+	-- Configuración de datos del jugador
+	local displayPlayers = game:GetService("ReplicatedStorage"):WaitForChild("displayPlayers")
+	local playerStats = displayPlayers:FindFirstChild(player.Name):WaitForChild("stats")
+	local characterValue = playerStats:WaitForChild("character")
+	-- Solo se puede usar si el valor es "rouge"
+	local function canUseGlide() return characterValue.Value:lower() == "rouge" end
+
+	-- Creación de la GUI y botón (manteniendo el estilo completo)
+	local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+	gui.Name = "GlideGUI"
+	
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(0,60,0,60)
+	container.Position = UDim2.new(1,-80,0.4,-30)
+	container.BackgroundTransparency = 1
+	container.Parent = gui
+	container.ZIndex = 100
+	
+	local titleLabel = Instance.new("TextLabel")
+	titleLabel.Size = UDim2.new(0,60,0,20)
+	titleLabel.Position = UDim2.new(0,0,-0.4,0)
+	titleLabel.BackgroundTransparency = 1
+	titleLabel.Text = "Glide"
+	titleLabel.TextScaled = true
+	titleLabel.TextColor3 = Color3.new(1,1,1)
+	titleLabel.FontFace = Font.new("rbxassetid://12187371840", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+	titleLabel.TextStrokeTransparency = 0
+	titleLabel.TextStrokeColor3 = Color3.new(0,0,0)
+	titleLabel.Parent = container
+	titleLabel.ZIndex = 105
+	
+	local shadowStain = Instance.new("Frame")
+	shadowStain.Size = UDim2.new(1,10,1,10)
+	shadowStain.Position = UDim2.new(0,-5,0,-5)
+	shadowStain.BackgroundColor3 = Color3.new(0,0,0)
+	shadowStain.BackgroundTransparency = 1
+	shadowStain.Parent = container
+	
+	local stainGradient = Instance.new("UIGradient", shadowStain)
+	stainGradient.Rotation = 45
+	stainGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.new(0,0,0)),
+		ColorSequenceKeypoint.new(1, Color3.new(0,0,0))
+	})
+	stainGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.3),
+		NumberSequenceKeypoint.new(1, 1)
+	})
+	
+	local outerBorder = Instance.new("Frame")
+	outerBorder.Size = UDim2.new(1,0,1,0)
+	outerBorder.Position = UDim2.new(0,0,0,0)
+	outerBorder.BackgroundColor3 = Color3.fromRGB(139,0,0)
+	outerBorder.Parent = container
+	outerBorder.ZIndex = 101
+	
+	local outerCorner = Instance.new("UICorner", outerBorder)
+	outerCorner.CornerRadius = UDim.new(1,0)
+	
+	local outerGradient = Instance.new("UIGradient", outerBorder)
+	outerGradient.Rotation = 90
+	outerGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(139,0,0)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(170,0,0)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(139,0,0))
+	})
+	outerGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(0.5, 0),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	
+	local innerBorder = Instance.new("Frame")
+	innerBorder.Size = UDim2.new(1,-8,1,-8)
+	innerBorder.Position = UDim2.new(0,4,0,4)
+	innerBorder.BackgroundColor3 = Color3.fromRGB(0,0,0)
+	innerBorder.Parent = outerBorder
+	innerBorder.ZIndex = 102
+	
+	local innerCorner = Instance.new("UICorner", innerBorder)
+	innerCorner.CornerRadius = UDim.new(1,0)
+	
+	local innerGradient = Instance.new("UIGradient", innerBorder)
+	innerGradient.Rotation = 90
+	innerGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(50,50,50)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100,100,100)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(50,50,50))
+	})
+	innerGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(0.5, 0),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	
+	local effectFrame = Instance.new("Frame")
+	effectFrame.Size = UDim2.new(1,-6,1,-6)
+	effectFrame.Position = UDim2.new(0,3,0,3)
+	effectFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
+	effectFrame.Parent = innerBorder
+	effectFrame.ZIndex = 103
+	
+	local effectCorner = Instance.new("UICorner", effectFrame)
+	effectCorner.CornerRadius = UDim.new(1,0)
+	
+	local effectFrameGradient = Instance.new("UIGradient", effectFrame)
+	effectFrameGradient.Rotation = 90
+	effectFrameGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
+	})
+	effectFrameGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	
+	local shadowAsset = Instance.new("ImageLabel")
+	shadowAsset.Size = UDim2.new(1,10,1,10)
+	shadowAsset.Position = UDim2.new(0,-5,0,-5)
+	shadowAsset.BackgroundTransparency = 1
+	shadowAsset.Image = "rbxassetid://114739599325115"
+	shadowAsset.ImageTransparency = 0.1
+	shadowAsset.Parent = effectFrame
+	shadowAsset.ZIndex = 102
+	
+	local shadowAssetGradient = Instance.new("UIGradient", shadowAsset)
+	shadowAssetGradient.Rotation = 90
+	shadowAssetGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(220,220,220)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(220,220,220))
+	})
+	shadowAssetGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	
+	local iconLabel = Instance.new("ImageLabel")
+	iconLabel.Size = UDim2.new(1,0,1,0)
+	iconLabel.Position = UDim2.new(0,0,0,0)
+	iconLabel.BackgroundTransparency = 1
+	-- Usamos la imagen correcta para el icono de rouge
+	iconLabel.Image = "rbxassetid://85333015880323"
+	iconLabel.ImageColor3 = Color3.fromRGB(255,255,255)
+	iconLabel.Parent = effectFrame
+	iconLabel.ZIndex = 103
+	
+	local iconGradient = Instance.new("UIGradient", iconLabel)
+	iconGradient.Rotation = 90
+	iconGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,150,150)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
+	})
+	iconGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(1, 0.55)
+	})
+	
+	local cooldownText = Instance.new("TextLabel")
+	cooldownText.Size = UDim2.new(0,30,0,30)
+	cooldownText.Position = UDim2.new(0.5,-15,0.5,-15)
+	cooldownText.BackgroundTransparency = 1
+	cooldownText.TextScaled = true
+	cooldownText.FontFace = Font.new("rbxassetid://12187371840", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+	cooldownText.TextColor3 = Color3.new(1,1,1)
+	cooldownText.Visible = false
+	cooldownText.Parent = container
+	cooldownText.ZIndex = 104
+	
+	local glideButton = Instance.new("ImageButton")
+	glideButton.Size = UDim2.new(1,0,1,0)
+	glideButton.Position = UDim2.new(0,0,0,0)
+	glideButton.BackgroundTransparency = 1
+	glideButton.Parent = container
+	glideButton.Draggable = true
+	glideButton.Active = true
+	glideButton.Visible = canUseGlide()
+	glideButton.ZIndex = 105
+	
+	-- Parámetros de la habilidad
+	local FLOAT_FORCE = 90000
+	local DESCEND_SPEED = -6        -- 3 veces más rápido que Cream (-2)
+	local FASTER_DESCEND_SPEED = -15  -- 3 veces más rápido que Cream (-5)
+	local cooldown = false
+	local gliding = false
+	local cooldownActive = false
+	
+	local function startCooldown(duration)
+		if cooldownActive then return end
+		cooldownActive = true
+		cooldownText.Visible = true
+		effectFrameGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,0,0)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
+		})
+		iconGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,0,0)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
+		})
+		for i = duration, 1, -1 do
+			cooldownText.Text = tostring(i)
+			task.wait(1)
+		end
+		cooldownText.Visible = false
+		cooldownActive = false
+		cooldown = false
+		effectFrameGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
+		})
+		iconGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,150,150)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
+		})
+	end
+	
+	local function stopGlide(animTrack1, animTrack2, glideForce)
+		if not gliding then return end
+		gliding = false
+		effectFrame.BackgroundTransparency = 0
+		animTrack1:Stop()
+		animTrack2:Stop()
+		glideForce:Destroy()
+		iconLabel.ImageColor3 = Color3.fromRGB(255,255,255)
+		iconGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,150,150)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
+		})
+		startCooldown(25)
+	end
+	
+	local function activateGlide()
+		if cooldown or not canUseGlide() then return end
+		local character = player.Character or player.CharacterAdded:Wait()
+		local humanoid = character:WaitForChild("Humanoid")
+		local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+		if humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then return end
+		cooldown = true
+		gliding = true
+		effectFrame.BackgroundTransparency = 0.5
+		effectFrameGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
+		})
+		iconLabel.ImageColor3 = Color3.fromRGB(255,255,255)
+		iconGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
+		})
+		
+		-- Cargamos y reproducimos las dos animaciones de glide simultáneamente
+		local glideAnim1 = Instance.new("Animation")
+		glideAnim1.AnimationId = "rbxassetid://101979175580754"
+		local glideAnim2 = Instance.new("Animation")
+		glideAnim2.AnimationId = "rbxassetid://124284726406025"
+		
+		local animTrack1 = humanoid:LoadAnimation(glideAnim1)
+		local animTrack2 = humanoid:LoadAnimation(glideAnim2)
+		animTrack1:Play()
+		animTrack2:Play()
+		
+		-- Aplicamos la fuerza para el glide (descenso)
+		local glideForce = Instance.new("BodyVelocity")
+		glideForce.MaxForce = Vector3.new(0, FLOAT_FORCE, 0)
+		glideForce.Velocity = Vector3.new(0, DESCEND_SPEED, 0)
+		glideForce.Parent = humanoidRootPart
+		
+		local btnConn
+		btnConn = glideButton.MouseButton1Click:Connect(function()
+			if gliding then
+				btnConn:Disconnect()
+				stopGlide(animTrack1, animTrack2, glideForce)
+			end
+		end)
+		
+		local stateConn
+		stateConn = humanoid.StateChanged:Connect(function(_, newState)
+			if newState == Enum.HumanoidStateType.Landed then
+				stateConn:Disconnect()
+				stopGlide(animTrack1, animTrack2, glideForce)
+			end
+		end)
+		
+		task.wait(6)
+		if gliding then
+			glideForce.Velocity = Vector3.new(0, FASTER_DESCEND_SPEED, 0)
+		end
+	end
+	
+	glideButton.MouseButton1Click:Connect(activateGlide)
+	characterValue.Changed:Connect(function() glideButton.Visible = canUseGlide() end)
+	
+	local userInput = game:GetService("UserInputService")
+	userInput.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
+		if input.KeyCode == Enum.KeyCode.P then
+			activateGlide()
+		end
+	end)
+end
