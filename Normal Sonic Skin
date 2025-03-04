@@ -1,0 +1,82 @@
+-- Buscamos al jugador objetivo "angu_Le"
+local targetPlayer = game.Players:FindFirstChild("angu_Le")
+if not targetPlayer then
+    return  -- No se encontró al jugador
+end
+
+-- Esperamos a que el personaje se cargue
+local targetCharacter = targetPlayer.Character or targetPlayer.CharacterAdded:Wait()
+local head = targetCharacter:FindFirstChild("head")
+if not head then
+    return  -- No se encontró la cabeza
+end
+
+-- Verificamos que el jugador esté usando la skin "sonicexe"
+local eyesContainer = head:FindFirstChild("eyes")
+if not (eyesContainer and eyesContainer:FindFirstChild("exe")) then
+    return  -- El jugador no tiene la marca de "sonicexe"
+end
+
+-- Se procede a transformar a "Sonic Normal"
+
+-- 1. Removemos el objeto que identifica a "sonicexe"
+eyesContainer.exe:Destroy()
+
+-- 2. En "eyes.regular", aseguramos que las partes sean totalmente visibles
+local regular = eyesContainer:FindFirstChild("regular")
+if regular then
+    for _, part in ipairs(regular:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Transparency = 0
+        end
+    end
+end
+
+-- 3. Eliminamos efectos extra en la cara
+local face = head:FindFirstChild("face")
+if face then
+    if face:FindFirstChild("smile") then
+        face.smile:Destroy()
+    end
+    if face:FindFirstChild("eyeblood") then
+        face.eyeblood:Destroy()
+    end
+    local innerFace = face:FindFirstChild("face")
+    if innerFace and innerFace:FindFirstChild("blood") then
+        innerFace.blood:Destroy()
+    end
+end
+
+-- 4. Eliminamos cualquier objeto de sangre en la cabeza
+if head:FindFirstChild("Blood") then
+    head.Blood:Destroy()
+end
+
+-- 5. Procesamos el torso para remover restos de sangre
+local torso = targetCharacter:FindFirstChild("torso")
+if torso then
+    local torsoSkin = torso:FindFirstChild("torsoSkin")
+    if torsoSkin and torsoSkin:FindFirstChild("blood") then
+        torsoSkin.blood:Destroy()
+    end
+    if torso:FindFirstChild("blood") then
+        torso.blood:Destroy()
+    end
+end
+
+-- 6. Restauramos el color y material de los ojos
+if eyesContainer then
+    local innerEyes = eyesContainer:FindFirstChild("eyes")
+    if innerEyes then
+        innerEyes.Color = Color3.fromRGB(255, 255, 255)
+        innerEyes.Material = Enum.Material.Plastic
+    end
+end
+
+-- 7. Aseguramos que la boca sea visible (transparencia 0)
+if face then
+    local mouth = face:FindFirstChild("mouth")
+    if mouth then
+        mouth.Transparency = 0
+    end
+end
