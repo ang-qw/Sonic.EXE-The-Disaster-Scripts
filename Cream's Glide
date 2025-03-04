@@ -113,12 +113,14 @@ if game.PlaceId == 14722542056 then
 	glideButton.Active = true
 	glideButton.Visible = canUseGlide()
 	glideButton.ZIndex = 105
+
 	local FLOAT_FORCE = 90000
 	local DESCEND_SPEED = -2
 	local FASTER_DESCEND_SPEED = -5
 	local cooldown = false
 	local gliding = false
 	local cooldownActive = false
+
 	local function startCooldown(duration)
 		if cooldownActive then return end
 		cooldownActive = true
@@ -135,6 +137,7 @@ if game.PlaceId == 14722542056 then
 		effectFrameGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),ColorSequenceKeypoint.new(1,Color3.fromRGB(255,255,255))})
 		iconGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(0,0,0)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(150,150,150)),ColorSequenceKeypoint.new(1,Color3.fromRGB(0,0,0))})
 	end
+
 	local function stopGlide(animTrack, glideForce)
 		if not gliding then return end
 		gliding = false
@@ -145,6 +148,7 @@ if game.PlaceId == 14722542056 then
 		iconGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(0,0,0)),ColorSequenceKeypoint.new(0.5,Color3.fromRGB(150,150,150)),ColorSequenceKeypoint.new(1,Color3.fromRGB(0,0,0))})
 		startCooldown(35)
 	end
+
 	local function activateGlide()
 		if cooldown or not canUseGlide() then return end
 		local character = player.Character or player.CharacterAdded:Wait()
@@ -184,6 +188,19 @@ if game.PlaceId == 14722542056 then
 			glideForce.Velocity = Vector3.new(0,FASTER_DESCEND_SPEED,0)
 		end
 	end
+
 	glideButton.MouseButton1Click:Connect(activateGlide)
-	characterValue.Changed:Connect(function() glideButton.Visible = canUseGlide() end)
+
+	-- Conexión para activar Glide al presionar la tecla "P" en PC
+	local UserInputService = game:GetService("UserInputService")
+	UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
+		if input.KeyCode == Enum.KeyCode.P then
+			activateGlide()
+		end
+	end)
+
+	characterValue.Changed:Connect(function() 
+		glideButton.Visible = canUseGlide() 
+	end)
 end
