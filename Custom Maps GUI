@@ -1,0 +1,683 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local mouse = player:GetMouse()
+
+local customFolder = workspace:FindFirstChild("customMap Child") or Instance.new("Folder", workspace)
+customFolder.Name = "customMap Child"
+local currentMapFolder = customFolder:FindFirstChild("customCurrent") or Instance.new("Folder", customFolder)
+currentMapFolder.Name = "customCurrent"
+
+local spawnPosition = Vector3.new(410.936737, 32.8273773, -3203.27246, 1, 0, 0, 0, 1, 0, 0, 0, 1)
+local floor = Instance.new("Part")
+floor.Size = Vector3.new(100, 1, 100)
+floor.Position = spawnPosition - Vector3.new(0, 3, 0)
+floor.Anchored = true
+floor.BrickColor = BrickColor.new("Light blue")
+floor.Material = Enum.Material.SmoothPlastic
+floor.Parent = workspace
+
+player.CharacterAdded:Connect(function(character)
+    if character.PrimaryPart then
+        character:SetPrimaryPartCFrame(CFrame.new(spawnPosition))
+    end
+end)
+
+local manifestName = "custom_map_manifest.json"
+local function getSaveFileName()
+    local baseName = "custom_map"
+    local extension = ".json"
+    local count = 0
+    local fileName = baseName .. extension
+    while isfile(fileName) do
+        count = count + 1
+        fileName = baseName .. count .. extension
+    end
+    return fileName
+end
+local function updateManifest(newFileName)
+    local manifest = {}
+    if isfile(manifestName) then
+        manifest = HttpService:JSONDecode(readfile(manifestName))
+    end
+    if not table.find(manifest, newFileName) then
+        table.insert(manifest, newFileName)
+    end
+    writefile(manifestName, HttpService:JSONEncode(manifest))
+end
+
+local function makeDraggable(frame)
+    local dragging, dragInput, dragStart, startPos
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+local function createSlider(parent, labelText, min, max, initial, callback)
+    local sliderFrame = Instance.new("Frame")
+    sliderFrame.Size = UDim2.new(1, -20, 0, 30)
+    sliderFrame.BackgroundTransparency = 1
+    sliderFrame.Parent = parent
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.3, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.new(1,1,1)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.Parent = sliderFrame
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Size = UDim2.new(0.65, 0, 0.4, 0)
+    sliderBar.Position = UDim2.new(0.35, 0, 0.3, 0)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(200, 150, 170)
+    sliderBar.Parent = sliderFrame
+    Instance.new("UICorner", sliderBar).CornerRadius = UDim.new(0, 6)
+    local knob = Instance.new("TextButton")
+    knob.Size = UDim2.new(0, 16, 1, 0)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+    knob.Text = ""
+    knob.AutoButtonColor = false
+    knob.Parent = sliderBar
+    Instance.new("UICorner", knob).CornerRadius = UDim.new(0, 8)
+    local function setValue(val)
+        local percent = (val - min) / (max - min)
+        knob.Position = UDim2.new(percent, -8, 0, 0)
+        callback(val)
+    end
+    setValue(initial)
+    local draggingKnob = false
+    knob.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            draggingKnob = true
+        end
+    end)
+    knob.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            draggingKnob = false
+        end
+    end)
+    sliderBar.InputChanged:Connect(function(input)
+        if draggingKnob and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local absPos = input.Position.X - sliderBar.AbsolutePosition.X
+            local percent = math.clamp(absPos / sliderBar.AbsoluteSize.X, 0, 1)
+            local newVal = min + (max - min) * percent
+            setValue(newVal)
+        end
+    end)
+    return sliderFrame
+end
+
+local placingPart = nil
+local deleteMode = false
+local selectedPart = nil
+local currentColor = Color3.new(1, 1, 1)
+local currentSize = 2
+local currentMaterial = Enum.Material.SmoothPlastic
+local snapEnabled = true
+local snapIncrement = 2
+
+local materialsList = {
+    "Plastic",
+    "Wood",
+    "Slate",
+    "Concrete",
+    "CorrodedMetal",
+    "DiamondPlate",
+    "Foil",
+    "Grass",
+    "Ice",
+    "Metal",
+    "Granite",
+    "Marble",
+    "Pebble",
+    "Sand",
+    "Fabric",
+    "SmoothPlastic",
+    "Neon",
+    "ForceField"
+}
+
+local function createMaterialPicker(parent)
+    local materialFrame = Instance.new("Frame")
+    materialFrame.Size = UDim2.new(1, -20, 0, 30)
+    materialFrame.BackgroundTransparency = 1
+    materialFrame.LayoutOrder = 2
+    materialFrame.Parent = parent
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.3, 0, 1, 0)
+    label.Text = "Material:"
+    label.TextColor3 = Color3.new(1,1,1)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.BackgroundTransparency = 1
+    label.Parent = materialFrame
+    local dropdown = Instance.new("TextButton")
+    dropdown.Size = UDim2.new(0.65, 0, 1, 0)
+    dropdown.Position = UDim2.new(0.35, 0, 0, 0)
+    dropdown.Text = "SmoothPlastic ▼"
+    dropdown.Font = Enum.Font.Gotham
+    dropdown.TextSize = 14
+    dropdown.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+    dropdown.Parent = materialFrame
+    dropdown.ZIndex = 1000
+    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 6)
+    local optionsFrame = Instance.new("Frame")
+    optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+    optionsFrame.Position = UDim2.new(0, 0, 1, 5)
+    optionsFrame.BackgroundColor3 = Color3.fromRGB(255, 228, 225)
+    optionsFrame.Visible = false
+    optionsFrame.Parent = materialFrame
+    optionsFrame.ZIndex = 1001
+    Instance.new("UICorner", optionsFrame).CornerRadius = UDim.new(0, 6)
+    local layout = Instance.new("UIListLayout", optionsFrame)
+    layout.Padding = UDim.new(0, 2)
+    for _, matName in pairs(materialsList) do
+        local option = Instance.new("TextButton")
+        option.Size = UDim2.new(1, 0, 0, 25)
+        option.Text = matName
+        option.Font = Enum.Font.Gotham
+        option.TextSize = 14
+        option.BackgroundColor3 = Color3.fromRGB(255, 200, 200)
+        option.Parent = optionsFrame
+        option.ZIndex = 1002
+        Instance.new("UICorner", option).CornerRadius = UDim.new(0, 4)
+        option.Activated:Connect(function()
+            currentMaterial = Enum.Material[matName]
+            dropdown.Text = matName .. " ▼"
+            optionsFrame.Visible = false
+        end)
+    end
+    dropdown.Activated:Connect(function()
+        optionsFrame.Visible = not optionsFrame.Visible
+        optionsFrame.Size = UDim2.new(1, 0, 0, #materialsList * 27)
+    end)
+    return materialFrame
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MapEditorUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local isMobile = UserInputService.TouchEnabled
+local frameSize = isMobile and UDim2.new(0, 200, 0, 371) or UDim2.new(0, 350, 0, 650)
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = frameSize
+mainFrame.Position = UDim2.new(0.02, 0, 0.5, -frameSize.Y.Offset/2)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.BackgroundColor3 = Color3.fromRGB(255, 228, 225)
+mainFrame.ClipsDescendants = true
+mainFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner", mainFrame)
+corner.CornerRadius = UDim.new(0, 12)
+local stroke = Instance.new("UIStroke", mainFrame)
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(255, 182, 193)
+local gradient = Instance.new("UIGradient", mainFrame)
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 240, 245)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 182, 193))
+})
+gradient.Rotation = 90
+makeDraggable(mainFrame)
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -20, 0, 40)
+title.Position = UDim2.new(0, 10, 0, 10)
+title.Text = "✨ Map Editor ✨"
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.fromRGB(200, 200, 200)
+title.TextSize = isMobile and 16 or 22
+title.BackgroundTransparency = 1
+title.Parent = mainFrame
+local titleStroke = Instance.new("UIStroke", title)
+titleStroke.Thickness = 2
+titleStroke.Color = Color3.fromRGB(150, 150, 150)
+RunService.Heartbeat:Connect(function()
+    title.Position = UDim2.new(0, 10, 0, 10 + math.sin(tick() * 4) * 2)
+end)
+local contentFrame = Instance.new("ScrollingFrame")
+contentFrame.Size = UDim2.new(1, -20, 1, -80)
+contentFrame.Position = UDim2.new(0, 10, 0, 60)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+contentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+contentFrame.ScrollBarThickness = 8
+local layout = Instance.new("UIListLayout", contentFrame)
+layout.Padding = UDim.new(0, isMobile and 4 or 8)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    contentFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y)
+end)
+local function createSnapToggle()
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Size = UDim2.new(1, -20, 0, 30)
+    toggleFrame.BackgroundTransparency = 1
+    toggleFrame.LayoutOrder = 1
+    toggleFrame.Parent = contentFrame
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Text = "Snap to Grid (2 studs):"
+    label.TextColor3 = Color3.new(1,1,1)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.BackgroundTransparency = 1
+    label.Parent = toggleFrame
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Size = UDim2.new(0.35, 0, 0.8, 0)
+    toggleButton.Position = UDim2.new(0.65, 0, 0.1, 0)
+    toggleButton.Text = snapEnabled and "ON" or "OFF"
+    toggleButton.Font = Enum.Font.GothamBold
+    toggleButton.TextSize = 14
+    toggleButton.TextColor3 = Color3.new(0,0,0)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+    toggleButton.Parent = toggleFrame
+    Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
+    toggleButton.Activated:Connect(function()
+        snapEnabled = not snapEnabled
+        toggleButton.Text = snapEnabled and "ON" or "OFF"
+    end)
+    return toggleFrame
+end
+local function createPart(partType, position)
+    local part
+    if partType == "Cube" then
+        part = Instance.new("Part")
+    elseif partType == "Triangle" then
+        part = Instance.new("WedgePart")
+    elseif partType == "Sphere" then
+        part = Instance.new("Part")
+        part.Shape = Enum.PartType.Ball
+    end
+    if snapEnabled then
+        position = Vector3.new(
+            math.floor(position.X/snapIncrement + 0.5)*snapIncrement,
+            math.floor(position.Y/snapIncrement + 0.5)*snapIncrement,
+            math.floor(position.Z/snapIncrement + 0.5)*snapIncrement
+        )
+    end
+    part.Size = Vector3.new(2, 2, 2) * currentSize
+    part.Position = position
+    part.Color = currentColor
+    part.Material = currentMaterial
+    part.Anchored = true
+    part.CanCollide = true
+    part.Parent = currentMapFolder
+    return part
+end
+local function startPlacing(partType)
+    if placingPart then return end
+    placingPart = {Type = partType, Temp = nil}
+    local preview = createPart(partType, spawnPosition)
+    preview.Transparency = 0.5
+    preview.CanCollide = false
+    preview.Material = currentMaterial
+    placingPart.Temp = preview
+    local camera = workspace.CurrentCamera
+    local updateConn = RunService.RenderStepped:Connect(function()
+        local mousePos = UserInputService:GetMouseLocation()
+        local ray = workspace.CurrentCamera:ScreenPointToRay(mousePos.X, mousePos.Y)
+        local raycastParams = RaycastParams.new()
+        raycastParams.FilterDescendantsInstances = {player.Character, placingPart.Temp}
+        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+        local rayResult = workspace:Raycast(ray.Origin, ray.Direction * 1000, raycastParams)
+        if rayResult then
+            local offset = rayResult.Normal * currentSize
+            local targetPos = rayResult.Position + offset
+            if snapEnabled then
+                targetPos = Vector3.new(
+                    math.floor(targetPos.X/snapIncrement + 0.5)*snapIncrement,
+                    math.floor(targetPos.Y/snapIncrement + 0.5)*snapIncrement,
+                    math.floor(targetPos.Z/snapIncrement + 0.5)*snapIncrement
+                )
+            end
+            preview.Position = targetPos
+            preview.Color = currentColor
+            preview.Size = Vector3.new(2, 2, 2) * currentSize
+        end
+    end)
+    local clickConn
+    clickConn = mouse.Button1Down:Connect(function()
+        if deleteMode then return end
+        if preview then
+            createPart(partType, preview.Position)
+            preview:Destroy()
+            placingPart = nil
+            updateConn:Disconnect()
+            clickConn:Disconnect()
+        end
+    end)
+end
+createSnapToggle()
+createMaterialPicker(contentFrame)
+local redSlider = createSlider(contentFrame, "Red:", 0, 1, 1, function(val)
+    currentColor = Color3.new(val, currentColor.G, currentColor.B)
+end)
+redSlider.LayoutOrder = 3
+local greenSlider = createSlider(contentFrame, "Green:", 0, 1, 1, function(val)
+    currentColor = Color3.new(currentColor.R, val, currentColor.B)
+end)
+greenSlider.LayoutOrder = 4
+local blueSlider = createSlider(contentFrame, "Blue:", 0, 1, 1, function(val)
+    currentColor = Color3.new(currentColor.R, currentColor.G, val)
+end)
+blueSlider.LayoutOrder = 5
+local sizeSlider = createSlider(contentFrame, "Size:", 1, 5, 2, function(val)
+    currentSize = val
+end)
+sizeSlider.LayoutOrder = 6
+local function createButton(text)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 0, isMobile and 30 or 40)
+    button.Text = text
+    button.Font = Enum.Font.GothamMedium
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.TextSize = isMobile and 12 or 16
+    button.AutoButtonColor = false
+    button.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+    button.LayoutOrder = 7
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
+    local buttonStroke = Instance.new("UIStroke", button)
+    buttonStroke.Thickness = 1.5
+    buttonStroke.Color = Color3.fromRGB(255, 255, 255)
+    local btnGradient = Instance.new("UIGradient", button)
+    btnGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 228, 225)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 182, 193))
+    })
+    btnGradient.Rotation = 90
+    button.MouseEnter:Connect(function()
+        TweenService:Create(btnGradient, TweenInfo.new(0.2), {Rotation = -90}):Play()
+    end)
+    button.MouseLeave:Connect(function()
+        TweenService:Create(btnGradient, TweenInfo.new(0.2), {Rotation = 90}):Play()
+    end)
+    return button
+end
+local addCubeButton = createButton("➕ Add Cube")
+local addTriangleButton = createButton("🔺 Add Triangle")
+local addSphereButton = createButton("🔵 Add Sphere")
+local exportButton = createButton("💾 Save Map")
+local importButton = createButton("📥 Import Map")
+local importTextButton = createButton("⌨️ Importar Texto")
+local deleteButton = createButton("❌ Delete Selected")
+local teleportButton = createButton("🎮 Teleport to Spawn")
+addCubeButton.Parent = contentFrame
+addTriangleButton.Parent = contentFrame
+addSphereButton.Parent = contentFrame
+exportButton.Parent = contentFrame
+importButton.Parent = contentFrame
+importTextButton.Parent = contentFrame
+deleteButton.Parent = contentFrame
+teleportButton.Parent = contentFrame
+local dropdownFrame = Instance.new("ScrollingFrame")
+dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
+dropdownFrame.BackgroundTransparency = 0.3
+dropdownFrame.BackgroundColor3 = Color3.fromRGB(255, 228, 225)
+dropdownFrame.Visible = false
+dropdownFrame.Parent = contentFrame
+dropdownFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+dropdownFrame.ScrollBarThickness = 8
+local dropdownLayout = Instance.new("UIListLayout", dropdownFrame)
+dropdownLayout.SortOrder = Enum.SortOrder.LayoutOrder
+dropdownLayout.Padding = UDim.new(0, 4)
+local function clearDropdown()
+    for _, child in ipairs(dropdownFrame:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
+end
+local function refreshDropdown()
+    clearDropdown()
+    if not isfile(manifestName) then return end
+    local manifest = HttpService:JSONDecode(readfile(manifestName))
+    local validFiles = {}
+    for _, fileName in ipairs(manifest) do
+        if isfile(fileName) then
+            table.insert(validFiles, fileName)
+        else
+            warn("File missing: " .. fileName)
+        end
+    end
+    if #validFiles ~= #manifest then
+        writefile(manifestName, HttpService:JSONEncode(validFiles))
+        manifest = validFiles
+    end
+    for _, fileName in ipairs(manifest) do
+        local fileButton = createButton(fileName)
+        fileButton.Size = UDim2.new(1, 0, 0, 30)
+        fileButton.Parent = dropdownFrame
+        fileButton.Activated:Connect(function()
+            if not isfile(fileName) then
+                warn("File not found: " .. fileName)
+                return
+            end
+            local content = readfile(fileName)
+            local success, mapData = pcall(HttpService.JSONDecode, HttpService, content)
+            if not success then
+                warn("Invalid map data!")
+                return
+            end
+            for _, child in ipairs(currentMapFolder:GetChildren()) do
+                child:Destroy()
+            end
+            for _, data in ipairs(mapData) do
+                local part = Instance.new(data.Type)
+                part.Size = Vector3.new(unpack(data.Size))
+                part.Position = Vector3.new(unpack(data.Position))
+                part.Color = Color3.new(unpack(data.Color))
+                part.Material = Enum.Material[data.Material]
+                part.Anchored = true
+                part.CanCollide = true
+                if data.Shape then
+                    part.Shape = Enum.PartType[data.Shape]
+                end
+                part.Parent = currentMapFolder
+            end
+            dropdownFrame.Visible = false
+        end)
+    end
+    local totalHeight = dropdownLayout.AbsoluteContentSize.Y
+    dropdownFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+    local maxDropdownHeight = 200
+    dropdownFrame.Size = UDim2.new(1, 0, 0, math.min(totalHeight, maxDropdownHeight))
+end
+importButton.Activated:Connect(function()
+    dropdownFrame.Visible = not dropdownFrame.Visible
+    if dropdownFrame.Visible then
+        refreshDropdown()
+    end
+end)
+local function exportMap()
+    local mapData = {}
+    for _, obj in ipairs(currentMapFolder:GetChildren()) do
+        local data = {
+            Type = obj.ClassName,
+            Position = {obj.Position.X, obj.Position.Y, obj.Position.Z},
+            Color = {obj.Color.R, obj.Color.G, obj.Color.B},
+            Size = {obj.Size.X, obj.Size.Y, obj.Size.Z},
+            Material = obj.Material.Name,
+            Shape = obj:IsA("Part") and obj.Shape and obj.Shape.Name or nil
+        }
+        table.insert(mapData, data)
+    end
+    local fileName = getSaveFileName()
+    writefile(fileName, HttpService:JSONEncode(mapData))
+    updateManifest(fileName)
+    refreshDropdown()
+    print("Map saved as: " .. fileName)
+end
+local function showDeleteConfirmation(part)
+    local confirmFrame = Instance.new("Frame", screenGui)
+    confirmFrame.Size = UDim2.new(0, 200, 0, 100)
+    confirmFrame.Position = UDim2.new(0.5, -100, 0.5, -50)
+    confirmFrame.BackgroundColor3 = Color3.fromRGB(255, 228, 225)
+    confirmFrame.BackgroundTransparency = 0.2
+    Instance.new("UICorner", confirmFrame).CornerRadius = UDim.new(0, 10)
+    local question = Instance.new("TextLabel", confirmFrame)
+    question.Size = UDim2.new(1, -20, 0, 40)
+    question.Position = UDim2.new(0, 10, 0, 10)
+    question.Text = "Delete this part?"
+    question.Font = Enum.Font.GothamBold
+    question.TextSize = 18
+    question.TextColor3 = Color3.new(1,1,1)
+    question.BackgroundTransparency = 1
+    local yesButton = createButton("Yes")
+    yesButton.Size = UDim2.new(0, 80, 0, 30)
+    yesButton.Position = UDim2.new(0, 20, 0, 60)
+    yesButton.Parent = confirmFrame
+    local noButton = createButton("No")
+    noButton.Size = UDim2.new(0, 80, 0, 30)
+    noButton.Position = UDim2.new(0, 110, 0, 60)
+    noButton.Parent = confirmFrame
+    yesButton.Activated:Connect(function()
+        part:Destroy()
+        confirmFrame:Destroy()
+    end)
+    noButton.Activated:Connect(function()
+        confirmFrame:Destroy()
+    end)
+end
+local function startDeleteMode()
+    deleteMode = true
+    print("Delete mode activated. Click a part to delete.")
+    local conn
+    conn = mouse.Button1Down:Connect(function()
+        local target = mouse.Target
+        if target and target:IsDescendantOf(currentMapFolder) then
+            selectedPart = target
+            showDeleteConfirmation(target)
+            deleteMode = false
+            conn:Disconnect()
+        end
+    end)
+end
+addCubeButton.Activated:Connect(function() startPlacing("Cube") end)
+addTriangleButton.Activated:Connect(function() startPlacing("Triangle") end)
+addSphereButton.Activated:Connect(function() startPlacing("Sphere") end)
+exportButton.Activated:Connect(exportMap)
+teleportButton.Activated:Connect(function()
+    if player.Character and player.Character.PrimaryPart then
+        player.Character:SetPrimaryPartCFrame(CFrame.new(spawnPosition))
+    end
+end)
+deleteButton.Activated:Connect(startDeleteMode)
+mouse.Button1Down:Connect(function()
+    if selectedPart and not deleteMode then
+        selectedPart = nil
+    end
+end)
+local creditsLabel = Instance.new("TextLabel")
+creditsLabel.Size = UDim2.new(1, -20, 0, 20)
+creditsLabel.Position = UDim2.new(0, 10, 1, -15)
+creditsLabel.AnchorPoint = Vector2.new(0, 1)
+creditsLabel.BackgroundTransparency = 1
+creditsLabel.Text = "Credits: Vangel (@grabyourangelwings)"
+creditsLabel.TextColor3 = Color3.new(1, 1, 1)
+creditsLabel.Font = Enum.Font.Gotham
+creditsLabel.TextSize = isMobile and 10 or 14
+creditsLabel.Parent = mainFrame
+local angLabel = Instance.new("TextLabel")
+angLabel.Size = UDim2.new(1, -20, 0, 20)
+angLabel.Position = UDim2.new(0, 10, 1, 0)
+angLabel.AnchorPoint = Vector2.new(0, 1)
+angLabel.BackgroundTransparency = 1
+angLabel.Text = "Ang (@ang.u_._)"
+angLabel.TextColor3 = Color3.new(1, 1, 1)
+angLabel.Font = Enum.Font.Gotham
+angLabel.TextSize = isMobile and 10 or 14
+angLabel.Parent = mainFrame
+local colorPreviewFrame = Instance.new("Frame")
+colorPreviewFrame.Size = UDim2.new(0, isMobile and 30 or 50, 0, isMobile and 30 or 50)
+colorPreviewFrame.Position = UDim2.new(1, -325, 0, 10)
+colorPreviewFrame.BackgroundColor3 = currentColor
+colorPreviewFrame.BorderSizePixel = 2
+colorPreviewFrame.BorderColor3 = Color3.new(1,1,1)
+colorPreviewFrame.Parent = mainFrame
+local colorPreviewCorner = Instance.new("UICorner", colorPreviewFrame)
+colorPreviewCorner.CornerRadius = UDim.new(0, 10)
+RunService.Heartbeat:Connect(function()
+    colorPreviewFrame.BackgroundColor3 = currentColor
+end)
+local textImportFrame = Instance.new("Frame", screenGui)
+textImportFrame.Size = UDim2.new(0,300,0,200)
+textImportFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+textImportFrame.BackgroundColor3 = Color3.fromRGB(255,228,225)
+textImportFrame.BackgroundTransparency = 0.2
+Instance.new("UICorner", textImportFrame).CornerRadius = UDim.new(0,10)
+local importTextBox = Instance.new("TextBox", textImportFrame)
+importTextBox.Size = UDim2.new(1, -20, 1, -70)
+importTextBox.Position = UDim2.new(0,10,0,10)
+importTextBox.TextWrapped = true
+importTextBox.ClearTextOnFocus = false
+importTextBox.MultiLine = true
+importTextBox.Text = ""
+importTextBox.TextColor3 = Color3.new(0,0,0)
+local importButton2 = createButton("Importar")
+importButton2.Size = UDim2.new(0,120,0,40)
+importButton2.Position = UDim2.new(0,10,1, -50)
+importButton2.Parent = textImportFrame
+local cancelButton = createButton("Cancelar")
+cancelButton.Size = UDim2.new(0,120,0,40)
+cancelButton.Position = UDim2.new(1, -130,1, -50)
+cancelButton.Parent = textImportFrame
+textImportFrame.Visible = false
+importButton2.Activated:Connect(function()
+    local content = importTextBox.Text
+    local success, mapData = pcall(HttpService.JSONDecode, HttpService, content)
+    if not success then
+        warn("Invalid map data!")
+        return
+    end
+    for _, child in ipairs(currentMapFolder:GetChildren()) do
+        child:Destroy()
+    end
+    for _, data in ipairs(mapData) do
+        local part = Instance.new(data.Type)
+        part.Size = Vector3.new(unpack(data.Size))
+        part.Position = Vector3.new(unpack(data.Position))
+        part.Color = Color3.new(unpack(data.Color))
+        part.Material = Enum.Material[data.Material]
+        part.Anchored = true
+        part.CanCollide = true
+        if data.Shape then
+            part.Shape = Enum.PartType[data.Shape]
+        end
+        part.Parent = currentMapFolder
+    end
+    textImportFrame.Visible = false
+end)
+cancelButton.Activated:Connect(function()
+    textImportFrame.Visible = false
+end)
+importTextButton.Activated:Connect(function()
+    textImportFrame.Visible = true
+end)
