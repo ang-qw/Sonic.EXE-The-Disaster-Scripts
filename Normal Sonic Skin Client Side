@@ -1,0 +1,40 @@
+local targetPlayer = game.Players.LocalPlayer
+local targetCharacter = targetPlayer.Character or targetPlayer.CharacterAdded:Wait()
+local head = targetCharacter:FindFirstChild("head")
+if not head then return end
+local eyesContainer = head:FindFirstChild("eyes")
+if not (eyesContainer and eyesContainer:FindFirstChild("exe")) then return end
+eyesContainer.exe:Destroy()
+local regular = eyesContainer:FindFirstChild("regular")
+if regular then
+	for _, part in ipairs(regular:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Transparency = 0
+		end
+	end
+end
+local face = head:FindFirstChild("face")
+if face then
+	if face:FindFirstChild("smile") then face.smile:Destroy() end
+	if face:FindFirstChild("eyeblood") then face.eyeblood:Destroy() end
+	local innerFace = face:FindFirstChild("face")
+	if innerFace and innerFace:FindFirstChild("blood") then innerFace.blood:Destroy() end
+end
+if head:FindFirstChild("Blood") then head.Blood:Destroy() end
+local torso = targetCharacter:FindFirstChild("torso")
+if torso then
+	local torsoSkin = torso:FindFirstChild("torsoSkin")
+	if torsoSkin and torsoSkin:FindFirstChild("blood") then torsoSkin.blood:Destroy() end
+	if torso:FindFirstChild("blood") then torso.blood:Destroy() end
+end
+if eyesContainer then
+	local innerEyes = eyesContainer:FindFirstChild("eyes")
+	if innerEyes then
+		innerEyes.Color = Color3.fromRGB(255,255,255)
+		innerEyes.Material = Enum.Material.Plastic
+	end
+end
+if face then
+	local mouth = face:FindFirstChild("mouth")
+	if mouth then mouth.Transparency = 0 end
+end
