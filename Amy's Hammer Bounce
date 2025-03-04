@@ -1,0 +1,271 @@
+local ABILITY_NAME = "Hammer Bounce"
+local ICON_ASSET = "rbxassetid://139710250827512"  -- Imagen actualizada del icon
+local SHADOW_ASSET = "rbxassetid://114739599325115"
+local PRE_IMPACT_ANIMATION = "rbxassetid://14693821579"
+local POST_IMPACT_ANIMATION = "rbxassetid://14694012690"
+local POST_IMPACT_SOUND = "rbxassetid://1885641628"
+local COOLDOWN_DURATION = 30
+local player = game.Players.LocalPlayer
+if game.PlaceId == 14722542056 then
+	local displayPlayers = game:GetService("ReplicatedStorage"):WaitForChild("displayPlayers")
+	local playerStats = displayPlayers:FindFirstChild(player.Name):WaitForChild("stats")
+	local characterValue = playerStats:WaitForChild("character")
+	local function canUseAbility() return characterValue.Value:lower() == "amy" end
+	local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+	gui.Name = "AbilityGUI"
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(0,60,0,60)
+	container.Position = UDim2.new(1,-80,0.4,-30)
+	container.BackgroundTransparency = 1
+	container.Parent = gui
+	container.ZIndex = 100
+	local titleLabel = Instance.new("TextLabel")
+	titleLabel.Size = UDim2.new(0,60,0,20)
+	titleLabel.Position = UDim2.new(0,0,-0.4,0)
+	titleLabel.BackgroundTransparency = 1
+	titleLabel.Text = ABILITY_NAME
+	titleLabel.TextScaled = true
+	titleLabel.TextColor3 = Color3.new(1,1,1)
+	titleLabel.FontFace = Font.new("rbxassetid://12187371840",Enum.FontWeight.Bold,Enum.FontStyle.Normal)
+	titleLabel.TextStrokeTransparency = 0
+	titleLabel.TextStrokeColor3 = Color3.new(0,0,0)
+	titleLabel.Parent = container
+	titleLabel.ZIndex = 105
+	local shadowStain = Instance.new("Frame")
+	shadowStain.Size = UDim2.new(1,10,1,10)
+	shadowStain.Position = UDim2.new(0,-5,0,-5)
+	shadowStain.BackgroundColor3 = Color3.new(0,0,0)
+	shadowStain.BackgroundTransparency = 1
+	shadowStain.Parent = container
+	local stainGradient = Instance.new("UIGradient", shadowStain)
+	stainGradient.Rotation = 45
+	stainGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0,Color3.new(0,0,0)),
+		ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
+	})
+	stainGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0,0.3),
+		NumberSequenceKeypoint.new(1,1)
+	})
+	local outerBorder = Instance.new("Frame")
+	outerBorder.Size = UDim2.new(1,0,1,0)
+	outerBorder.Position = UDim2.new(0,0,0,0)
+	outerBorder.BackgroundColor3 = Color3.fromRGB(139,0,0)
+	outerBorder.Parent = container
+	outerBorder.ZIndex = 101
+	local outerCorner = Instance.new("UICorner", outerBorder)
+	outerCorner.CornerRadius = UDim.new(1,0)
+	local outerGradient = Instance.new("UIGradient", outerBorder)
+	outerGradient.Rotation = 90
+	outerGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0,Color3.fromRGB(139,0,0)),
+		ColorSequenceKeypoint.new(0.5,Color3.fromRGB(170,0,0)),
+		ColorSequenceKeypoint.new(1,Color3.fromRGB(139,0,0))
+	})
+	outerGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0,0),
+		NumberSequenceKeypoint.new(0.5,0),
+		NumberSequenceKeypoint.new(1,0)
+	})
+	local innerBorder = Instance.new("Frame")
+	innerBorder.Size = UDim2.new(1,-8,1,-8)
+	innerBorder.Position = UDim2.new(0,4,0,4)
+	innerBorder.BackgroundColor3 = Color3.fromRGB(0,0,0)
+	innerBorder.Parent = outerBorder
+	innerBorder.ZIndex = 102
+	local innerCorner = Instance.new("UICorner", innerBorder)
+	innerCorner.CornerRadius = UDim.new(1,0)
+	local innerGradient = Instance.new("UIGradient", innerBorder)
+	innerGradient.Rotation = 90
+	innerGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0,Color3.fromRGB(50,50,50)),
+		ColorSequenceKeypoint.new(0.5,Color3.fromRGB(100,100,100)),
+		ColorSequenceKeypoint.new(1,Color3.fromRGB(50,50,50))
+	})
+	innerGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0,0),
+		NumberSequenceKeypoint.new(0.5,0),
+		NumberSequenceKeypoint.new(1,0)
+	})
+	local effectFrame = Instance.new("Frame")
+	effectFrame.Size = UDim2.new(1,-6,1,-6)
+	effectFrame.Position = UDim2.new(0,3,0,3)
+	effectFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
+	effectFrame.Parent = innerBorder
+	effectFrame.ZIndex = 103
+	local effectCorner = Instance.new("UICorner", effectFrame)
+	effectCorner.CornerRadius = UDim.new(1,0)
+	local effectFrameGradient = Instance.new("UIGradient", effectFrame)
+	effectFrameGradient.Rotation = 90
+	effectFrameGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),
+		ColorSequenceKeypoint.new(1,Color3.fromRGB(255,255,255))
+	})
+	effectFrameGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0,0),
+		NumberSequenceKeypoint.new(1,0)
+	})
+	local shadowAsset = Instance.new("ImageLabel")
+	shadowAsset.Size = UDim2.new(1,10,1,10)
+	shadowAsset.Position = UDim2.new(0,-5,0,-5)
+	shadowAsset.BackgroundTransparency = 1
+	shadowAsset.Image = SHADOW_ASSET
+	shadowAsset.ImageTransparency = 0.1
+	shadowAsset.Parent = effectFrame
+	shadowAsset.ZIndex = 102
+	local shadowAssetGradient = Instance.new("UIGradient", shadowAsset)
+	shadowAssetGradient.Rotation = 90
+	shadowAssetGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0,Color3.fromRGB(220,220,220)),
+		ColorSequenceKeypoint.new(1,Color3.fromRGB(220,220,220))
+	})
+	shadowAssetGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0,0),
+		NumberSequenceKeypoint.new(1,0)
+	})
+	local iconLabel = Instance.new("ImageLabel")
+	iconLabel.Size = UDim2.new(1,0,1,0)
+	iconLabel.Position = UDim2.new(0,0,0,0)
+	iconLabel.BackgroundTransparency = 1
+	iconLabel.Image = ICON_ASSET
+	-- Usamos el color blanco para mostrar correctamente la imagen
+	iconLabel.ImageColor3 = Color3.fromRGB(255,255,255)
+	iconLabel.Parent = effectFrame
+	iconLabel.ZIndex = 103
+	local iconGradient = Instance.new("UIGradient", iconLabel)
+	iconGradient.Rotation = 90
+	iconGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150,150,150)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
+	})
+	iconGradient.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(1, 0.55)
+	})
+	local cooldownText = Instance.new("TextLabel")
+	cooldownText.Size = UDim2.new(0,30,0,30)
+	cooldownText.Position = UDim2.new(0.5,-15,0.5,-15)
+	cooldownText.BackgroundTransparency = 1
+	cooldownText.TextScaled = true
+	cooldownText.FontFace = Font.new("rbxassetid://12187371840",Enum.FontWeight.Bold,Enum.FontStyle.Normal)
+	cooldownText.TextColor3 = Color3.new(1,1,1)
+	cooldownText.Visible = false
+	cooldownText.Parent = container
+	cooldownText.ZIndex = 104
+	local abilityButton = Instance.new("ImageButton")
+	abilityButton.Size = UDim2.new(1,0,1,0)
+	abilityButton.Position = UDim2.new(0,0,0,0)
+	abilityButton.BackgroundTransparency = 1
+	abilityButton.Parent = container
+	abilityButton.Draggable = true
+	abilityButton.Active = true
+	abilityButton.Visible = canUseAbility()
+	abilityButton.ZIndex = 105
+	local FLOAT_FORCE = 90000
+	local BOUNCE_MULTIPLIER = 50
+	local cooldown = false
+	local activeAbility = false
+	local cooldownActive = false
+	local abilityActivatedTime = 0
+	local userInput = game:GetService("UserInputService")
+	local function startCooldown(duration)
+		if cooldownActive then return end
+		cooldownActive = true
+		cooldownText.Visible = true
+		effectFrameGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),
+			ColorSequenceKeypoint.new(0.5,Color3.fromRGB(255,0,0)),
+			ColorSequenceKeypoint.new(1,Color3.fromRGB(255,255,255))
+		})
+		iconGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0,Color3.fromRGB(0,0,0)),
+			ColorSequenceKeypoint.new(0.5,Color3.fromRGB(255,0,0)),
+			ColorSequenceKeypoint.new(1,Color3.fromRGB(0,0,0))
+		})
+		for i = duration,1,-1 do
+			cooldownText.Text = tostring(i)
+			task.wait(1)
+		end
+		cooldownText.Visible = false
+		cooldownActive = false
+		cooldown = false
+		effectFrameGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),
+			ColorSequenceKeypoint.new(1,Color3.fromRGB(255,255,255))
+		})
+		iconGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0,Color3.fromRGB(0,0,0)),
+			ColorSequenceKeypoint.new(0.5,Color3.fromRGB(150,150,150)),
+			ColorSequenceKeypoint.new(1,Color3.fromRGB(0,0,0))
+		})
+	end
+	local function stopAbility(animTrack)
+		if not activeAbility then return end
+		activeAbility = false
+		effectFrame.BackgroundTransparency = 0
+		animTrack:Stop()
+		local rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if rootPart then
+			local bounceImpulse = math.clamp((tick() - abilityActivatedTime) * BOUNCE_MULTIPLIER,50,500)
+			local bodyVel = Instance.new("BodyVelocity")
+			bodyVel.MaxForce = Vector3.new(0,FLOAT_FORCE,0)
+			bodyVel.Velocity = Vector3.new(0,bounceImpulse,0)
+			bodyVel.Parent = rootPart
+			game.Debris:AddItem(bodyVel,0.5)
+		end
+		local postAnim = Instance.new("Animation")
+		postAnim.AnimationId = POST_IMPACT_ANIMATION
+		local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+		if humanoid then
+			local postAnimTrack = humanoid:LoadAnimation(postAnim)
+			postAnimTrack:Play()
+		end
+		local sound = Instance.new("Sound",player.Character and (player.Character:FindFirstChild("Head") or player.Character))
+		sound.SoundId = POST_IMPACT_SOUND
+		sound:Play()
+		startCooldown(COOLDOWN_DURATION)
+	end
+	local function activateAbility()
+		if cooldown or not canUseAbility() then return end
+		local character = player.Character or player.CharacterAdded:Wait()
+		local humanoid = character:WaitForChild("Humanoid")
+		local rootPart = character:WaitForChild("HumanoidRootPart")
+		if humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then return end
+		cooldown = true
+		activeAbility = true
+		abilityActivatedTime = tick()
+		effectFrame.BackgroundTransparency = 0.5
+		effectFrameGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),
+			ColorSequenceKeypoint.new(0.5,Color3.fromRGB(0,255,0)),
+			ColorSequenceKeypoint.new(1,Color3.fromRGB(255,255,255))
+		})
+		-- Actualizamos el color del icono al activar la habilidad
+		iconLabel.ImageColor3 = Color3.fromRGB(255,255,255)
+		iconGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0,Color3.fromRGB(0,0,0)),
+			ColorSequenceKeypoint.new(0.5,Color3.fromRGB(0,255,0)),
+			ColorSequenceKeypoint.new(1,Color3.fromRGB(0,0,0))
+		})
+		local preAnim = Instance.new("Animation")
+		preAnim.AnimationId = PRE_IMPACT_ANIMATION
+		local animTrack = humanoid:LoadAnimation(preAnim)
+		animTrack:Play()
+		local stateConn
+		stateConn = humanoid.StateChanged:Connect(function(_, newState)
+			if newState == Enum.HumanoidStateType.Landed then
+				stateConn:Disconnect()
+				stopAbility(animTrack)
+			end
+		end)
+	end
+	abilityButton.MouseButton1Click:Connect(activateAbility)
+	characterValue.Changed:Connect(function() abilityButton.Visible = canUseAbility() end)
+	userInput.InputBegan:Connect(function(input,gameProcessed)
+		if gameProcessed then return end
+		if input.KeyCode == Enum.KeyCode.P then
+			activateAbility()
+		end
+	end)
+end
