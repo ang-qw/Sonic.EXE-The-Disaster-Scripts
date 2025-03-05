@@ -1,0 +1,126 @@
+-- THE BARRIER & SPEED RADIUS SECTION (Adaptado para móviles y PC)
+-- Barrier: Activa acciones repetitivas de "barrier"
+-- Speed Radius: Activa acciones repetitivas de "speedRadius"
+--
+-- Se activa con el botón táctil (o clic en PC) y también mediante la tecla T para Barrier.
+-- Los botones se ajustan en tamaño y posición según si el dispositivo es móvil.
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Detectar si se usa dispositivo móvil (o iPad)
+local isMobile = UserInputService.TouchEnabled
+
+-------------------------------
+-- BARRIER SECTION
+-------------------------------
+local isTracking2 = false
+
+local function performBarrierActions()
+    local remotes = ReplicatedStorage.remotes
+    remotes.actions:FireServer("drown")
+    remotes.infect:FireServer()
+    player.PlayerGui.stats:SetAttribute("isDead", false)
+end
+
+local function fireBarriers()
+    while isTracking2 do
+        performBarrierActions()
+        ReplicatedStorage.remotes.abilities:FireServer("barrier")
+        wait(0.01)
+        local pos = player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character.HumanoidRootPart.Position
+        if pos then
+            ReplicatedStorage.remotes.abilities:FireServer("placeBarrier", CFrame.new(pos) * CFrame.Angles(math.pi, 0.4, -math.pi))
+        end
+        wait(0.01)
+        ReplicatedStorage.remotes.abilities:FireServer("cancelBarrier")
+        wait(0.01)
+    end
+end
+
+local function toggleTracking2()
+    isTracking2 = not isTracking2
+    if isTracking2 then
+        fireBarriers()
+    end
+end
+
+-- Para PC: permite alternar con la tecla T
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.T then
+        toggleTracking2()
+    end
+end)
+
+local function createToggleBarButton()
+    local screenGui = player.PlayerGui:FindFirstChild("ScreenGui") or Instance.new("ScreenGui", player.PlayerGui)
+    screenGui.Name = "MobileUI"
+    local button2 = Instance.new("ImageButton")
+    button2.BackgroundTransparency = 1
+    if isMobile then
+        button2.Size = UDim2.new(0, 150, 0, 150)
+        button2.Position = UDim2.new(0.85, -75, 0.6, -75)
+    else
+        button2.Size = UDim2.new(0, 200, 0, 200)
+        button2.Position = UDim2.new(0.752, -100, 0.478, -25)
+    end
+    button2.Image = "http://www.roblox.com/asset/?id=121695916949622"
+    button2.Parent = screenGui
+    button2.MouseButton1Click:Connect(function()
+        isTracking2 = not isTracking2
+        if isTracking2 then fireBarriers() end
+    end)
+end
+
+createToggleBarButton()
+
+-------------------------------
+-- SPEED RADIUS SECTION
+-------------------------------
+local isTracking3 = false
+
+local function performSpeedyActions()
+    local remotes = ReplicatedStorage.remotes
+    remotes.actions:FireServer("drown")
+    remotes.infect:FireServer()
+    player.PlayerGui.stats:SetAttribute("isDead", false)
+end
+
+local function fireSpRadius()
+    while isTracking3 do
+        performSpeedyActions()
+        ReplicatedStorage.remotes.abilities:FireServer("speedRadius")
+        wait(0.5)
+        ReplicatedStorage.remotes.abilities:FireServer("cancelSpeedRadius")
+        wait(0.01)
+    end
+end
+
+local function toggleTracking3()
+    isTracking3 = not isTracking3
+    if isTracking3 then fireSpRadius() end
+end
+
+local function createToggleSpdButton()
+    local screenGui = player.PlayerGui:FindFirstChild("ScreenGui") or Instance.new("ScreenGui", player.PlayerGui)
+    screenGui.Name = "MobileUI"
+    local button3 = Instance.new("ImageButton")
+    button3.BackgroundTransparency = 1
+    if isMobile then
+        button3.Size = UDim2.new(0, 150, 0, 150)
+        button3.Position = UDim2.new(0.85, -75, 0.3, -75)
+    else
+        button3.Size = UDim2.new(0, 200, 0, 200)
+        button3.Position = UDim2.new(0.826, -100, 0.414, -25)
+    end
+    button3.Image = "http://www.roblox.com/asset/?id=108866134053157"
+    button3.Parent = screenGui
+    button3.MouseButton1Click:Connect(function()
+        toggleTracking3()
+    end)
+end
+
+createToggleSpdButton()
