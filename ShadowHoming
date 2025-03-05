@@ -1,0 +1,292 @@
+-- Decompiler will be improved soon!
+-- Decompiled with Konstant V2.1, a fast Luau decompiler made in Luau by plusgiant5 (https://discord.gg/wyButjTMhM)
+-- Decompiled on 2025-03-05 12:09:33
+-- Luau version 6, Types version 3
+-- Time taken: 0.005759 seconds
+
+local module_upvr = {}
+function module_upvr.setBoost(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18) -- Line 3
+	--[[ Upvalues[1]:
+		[1]: module_upvr (readonly)
+	]]
+	local var2_upvw = false
+	local var3_upvw
+	local bind_upvr = arg17:WaitForChild("bind")
+	function module_upvr.boost(arg1_2) -- Line 25
+		--[[ Upvalues[5]:
+			[1]: arg11 (readonly)
+			[2]: arg13 (readonly)
+			[3]: arg14 (readonly)
+			[4]: module_upvr (copied, readonly)
+			[5]: arg16 (readonly)
+		]]
+		if arg1_2 == Enum.UserInputState.Begin and arg11.checkForCooldowns(arg13, "shadowBoostCooldown") == false and arg14.homingAttack[1]:GetAttribute("active") == false then
+			module_upvr.callBoost()
+			arg11.secureLocalCooldowns(arg13, "shadowBoostCooldown")
+			arg16:FireServer("boost")
+		end
+	end
+	local function forceLand_upvr(arg1_3, arg2_2) -- Line 44, Named "forceLand"
+		--[[ Upvalues[8]:
+			[1]: arg4 (readonly)
+			[2]: var2_upvw (read and write)
+			[3]: arg8 (readonly)
+			[4]: var3_upvw (read and write)
+			[5]: arg15 (readonly)
+			[6]: arg9 (readonly)
+			[7]: bind_upvr (readonly)
+			[8]: arg16 (readonly)
+		]]
+		if arg1_3 == "forceLand" and arg2_2 == Enum.UserInputState.Begin and arg4:FindFirstChild("boost") and var2_upvw == false then
+			arg8:UnbindAction("forceLand")
+			if var3_upvw ~= nil then
+				var3_upvw:Disconnect()
+				var3_upvw = nil
+			end
+			arg15.boostLanding:Play(0.1)
+			arg15.boost:Stop(0.1)
+			local any_getJumpButton_result1 = arg9.getJumpButton()
+			if any_getJumpButton_result1 ~= nil then
+				any_getJumpButton_result1.icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+			end
+			bind_upvr.Visible = false
+			var2_upvw = true
+			arg16:FireServer("boostState", "landing")
+			arg4.boost.VectorVelocity = Vector3.new(0, -150, 0)
+		end
+	end
+	local var6_upvw
+	local var7_upvw = false
+	function module_upvr.callBoost() -- Line 94
+		--[[ Upvalues[19]:
+			[1]: arg9 (readonly)
+			[2]: arg4 (readonly)
+			[3]: arg14 (readonly)
+			[4]: arg15 (readonly)
+			[5]: arg12 (readonly)
+			[6]: var6_upvw (read and write)
+			[7]: arg5 (readonly)
+			[8]: var2_upvw (read and write)
+			[9]: var7_upvw (read and write)
+			[10]: arg3 (readonly)
+			[11]: bind_upvr (readonly)
+			[12]: arg10 (readonly)
+			[13]: var3_upvw (read and write)
+			[14]: forceLand_upvr (readonly)
+			[15]: arg8 (readonly)
+			[16]: arg16 (readonly)
+			[17]: arg18 (readonly)
+			[18]: arg1 (readonly)
+			[19]: arg6 (readonly)
+		]]
+		local any_getJumpButton_result1_upvr = arg9.getJumpButton()
+		local var11_upvw = 25
+		local LinearVelocity_upvr = Instance.new("LinearVelocity")
+		local LookVector_upvr = arg4.CFrame.LookVector
+		local var14_upvw
+		for _, v in pairs(arg4:GetChildren()) do
+			if v.ClassName == "LinearVelocity" then
+				v.Enabled = false
+			end
+		end
+		arg14.boost[1]:SetAttribute("active", true)
+		arg15.boostAttackStartUp:Play(0.1, nil, 1.3)
+		arg15.boost:Play(0.3, nil, 1.3)
+		local var18 = arg4
+		var18.CFrame += Vector3.new(0, 2, 0)
+		arg12:SetAttribute("canMove", false)
+		arg12:SetAttribute("canJump", false)
+		if any_getJumpButton_result1_upvr ~= nil then
+			any_getJumpButton_result1_upvr.Visible = true
+			var6_upvw = any_getJumpButton_result1_upvr:GetPropertyChangedSignal("Visible"):Connect(function() -- Line 153
+				--[[ Upvalues[1]:
+					[1]: any_getJumpButton_result1_upvr (readonly)
+				]]
+				if any_getJumpButton_result1_upvr.Visible == false then
+					any_getJumpButton_result1_upvr.Visible = true
+				end
+			end)
+		end
+		LinearVelocity_upvr.Name = "boost"
+		LinearVelocity_upvr.Attachment0 = arg4:FindFirstChildOfClass("Attachment")
+		LinearVelocity_upvr.ForceLimitMode = Enum.ForceLimitMode.PerAxis
+		LinearVelocity_upvr.MaxAxesForce = Vector3.new(20000, 20000, 20000)
+		LinearVelocity_upvr.Parent = arg4
+		LinearVelocity_upvr.VectorVelocity = LookVector_upvr * 90 + Vector3.new(0, var11_upvw, 0)
+		local var21_upvw = false
+		task.delay(0.25, function() -- Line 201
+			--[[ Upvalues[11]:
+				[1]: var7_upvw (copied, read and write)
+				[2]: arg3 (copied, readonly)
+				[3]: LinearVelocity_upvr (readonly)
+				[4]: var14_upvw (read and write)
+				[5]: arg12 (copied, readonly)
+				[6]: bind_upvr (copied, readonly)
+				[7]: arg10 (copied, readonly)
+				[8]: arg9 (copied, readonly)
+				[9]: var3_upvw (copied, read and write)
+				[10]: forceLand_upvr (copied, readonly)
+				[11]: arg8 (copied, readonly)
+			]]
+			-- KONSTANTERROR: [0] 1. Error Block 1 start (CF ANALYSIS FAILED)
+			var7_upvw = true
+			-- KONSTANTERROR: [0] 1. Error Block 1 end (CF ANALYSIS FAILED)
+			-- KONSTANTERROR: [9] 7. Error Block 2 start (CF ANALYSIS FAILED)
+			LinearVelocity_upvr:Destroy()
+			warn("already touching ground!")
+			-- KONSTANTERROR: [9] 7. Error Block 2 end (CF ANALYSIS FAILED)
+			-- KONSTANTERROR: [17] 13. Error Block 3 start (CF ANALYSIS FAILED)
+			-- KONSTANTERROR: [17] 13. Error Block 3 end (CF ANALYSIS FAILED)
+		end)
+		local any_Connect_result1_upvw = arg5.RenderStepped:Connect(function() -- Line 177
+			--[[ Upvalues[5]:
+				[1]: var21_upvw (read and write)
+				[2]: var2_upvw (copied, read and write)
+				[3]: var11_upvw (read and write)
+				[4]: LinearVelocity_upvr (readonly)
+				[5]: LookVector_upvr (readonly)
+			]]
+			if var21_upvw == false and var2_upvw == false then
+				var21_upvw = true
+				if 15 < var11_upvw then
+					var11_upvw -= 1
+				end
+				LinearVelocity_upvr.VectorVelocity = LookVector_upvr * 90 + Vector3.new(0, var11_upvw, 0)
+				task.wait(0.03)
+				var21_upvw = false
+			end
+		end)
+		local var25_upvw
+		var25_upvw = LinearVelocity_upvr.Destroying:Connect(function() -- Line 267
+			--[[ Upvalues[14]:
+				[1]: var7_upvw (copied, read and write)
+				[2]: arg15 (copied, readonly)
+				[3]: arg14 (copied, readonly)
+				[4]: arg16 (copied, readonly)
+				[5]: arg9 (copied, readonly)
+				[6]: var2_upvw (copied, read and write)
+				[7]: arg12 (copied, readonly)
+				[8]: arg8 (copied, readonly)
+				[9]: bind_upvr (copied, readonly)
+				[10]: any_Connect_result1_upvw (read and write)
+				[11]: var6_upvw (copied, read and write)
+				[12]: var3_upvw (copied, read and write)
+				[13]: var25_upvw (read and write)
+				[14]: var14_upvw (read and write)
+			]]
+			var7_upvw = false
+			arg15.boost:Stop(0.2)
+			arg14.boost[1]:SetAttribute("active", false)
+			arg16:FireServer("cancelBoost")
+			local any_getJumpButton_result1_2 = arg9.getJumpButton()
+			if any_getJumpButton_result1_2 ~= nil then
+				any_getJumpButton_result1_2.icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+			end
+			arg15.boostLanding:Stop(0.1)
+			if var2_upvw == false then
+				arg12:SetAttribute("canMove", true)
+				arg12:SetAttribute("canJump", true)
+			else
+				task.delay(0.5, function() -- Line 305
+					--[[ Upvalues[2]:
+						[1]: arg14 (copied, readonly)
+						[2]: arg12 (copied, readonly)
+					]]
+					if arg14.homingAttack[1]:GetAttribute("active") == false then
+						arg12:SetAttribute("canMove", true)
+					end
+					arg12:SetAttribute("canJump", true)
+				end)
+			end
+			arg8:UnbindAction("forceLand")
+			bind_upvr.Visible = false
+			var2_upvw = false
+			if any_Connect_result1_upvw ~= nil then
+				any_Connect_result1_upvw:Disconnect()
+				any_Connect_result1_upvw = nil
+			end
+			if var6_upvw ~= nil then
+				var6_upvw:Disconnect()
+				var6_upvw = nil
+			end
+			if var3_upvw ~= nil then
+				var3_upvw:Disconnect()
+				var3_upvw = nil
+			end
+			var25_upvw:Disconnect()
+			var25_upvw = nil
+			var14_upvw:Disconnect()
+			var14_upvw = nil
+		end)
+		var14_upvw = arg3:GetPropertyChangedSignal("FloorMaterial"):Connect(function() -- Line 363
+			--[[ Upvalues[10]:
+				[1]: arg3 (copied, readonly)
+				[2]: var7_upvw (copied, read and write)
+				[3]: LinearVelocity_upvr (readonly)
+				[4]: var2_upvw (copied, read and write)
+				[5]: arg18 (copied, readonly)
+				[6]: arg1 (copied, readonly)
+				[7]: arg16 (copied, readonly)
+				[8]: arg15 (copied, readonly)
+				[9]: arg6 (copied, readonly)
+				[10]: arg4 (copied, readonly)
+			]]
+			if arg3.FloorMaterial ~= Enum.Material.Air and var7_upvw == true then
+				print("touched ground!")
+				LinearVelocity_upvr:Destroy()
+				if var2_upvw == true then
+					require(arg18.shortcuts).setForcedLandingParticles(arg1)
+					arg16:FireServer("boostState", "landed")
+					arg15.boostLanded:Play(0.1)
+					task.delay(0.4, function() -- Line 386
+						--[[ Upvalues[1]:
+							[1]: arg15 (copied, readonly)
+						]]
+						arg15.boostLanded:Stop(0.3)
+					end)
+					local tbl_2 = {}
+					for _, v_2 in pairs(arg6:GetTagged("exe")) do
+						if v_2:FindFirstChild("HumanoidRootPart") then
+							local RaycastParams_new_result1 = RaycastParams.new()
+							RaycastParams_new_result1.FilterType = Enum.RaycastFilterType.Exclude
+							RaycastParams_new_result1.FilterDescendantsInstances = {v_2, arg6:GetTagged("morphed")}
+							local HumanoidRootPart = v_2.HumanoidRootPart
+							local workspace_Raycast_result1 = workspace:Raycast(HumanoidRootPart.Position, Vector3.new(-0, -5, -0), RaycastParams_new_result1)
+							if (arg4.Position - HumanoidRootPart.Position).Magnitude <= 25 then
+								if workspace_Raycast_result1 ~= nil then
+									table.insert(tbl_2, v_2)
+									print(v_2.Name.." is touching the ground! ("..workspace_Raycast_result1.Instance.Name..')')
+								else
+									print(v_2.Name.." was not touching the ground!")
+									warn(v_2.Humanoid:GetState())
+								end
+							end
+						end
+					end
+					arg16:FireServer("boostPush", tbl_2)
+					table.clear(tbl_2)
+				end
+			end
+		end)
+		task.delay(1, function() -- Line 445
+			--[[ Upvalues[2]:
+				[1]: var2_upvw (copied, read and write)
+				[2]: LinearVelocity_upvr (readonly)
+			]]
+			if var2_upvw == false then
+				LinearVelocity_upvr:Destroy()
+			else
+				print("cannot remove the boost object until the player touches the ground!")
+			end
+		end)
+	end
+	function module_upvr.cancelBoost() -- Line 461
+	end
+	local function _() -- Line 466
+		--[[ Upvalues[1]:
+			[1]: arg8 (readonly)
+		]]
+		arg8:UnbindAction("forceLand")
+	end
+end
+return module_upvr
