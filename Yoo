@@ -1,0 +1,370 @@
+-- Only run if the game is Sonic EXE - The Disaster 1-3
+if game.PlaceId ~= 14722542056 then
+    return
+end
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local isMobile = UserInputService.TouchEnabled
+local frameSize = isMobile and UDim2.new(0, 200, 0, 450) or UDim2.new(0, 350, 0, 550)
+
+-- Table to track executed scripts (each only runs once)
+local executedScripts = {
+    customAbilities = false,
+    customMapGUI = false,
+    normalSonicSkin = false,
+    silverSpam = false,
+    amyHammer = false,
+}
+
+local keyActivated = false
+
+-- Create the ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomScriptGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- Main Frame (estilo similar)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = frameSize
+mainFrame.Position = UDim2.new(0.05, 0, 0.5, -frameSize.Y.Offset/2)
+mainFrame.BackgroundColor3 = Color3.fromRGB(255, 228, 225)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.ClipsDescendants = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner", mainFrame)
+mainCorner.CornerRadius = UDim.new(0, 12)
+local mainStroke = Instance.new("UIStroke", mainFrame)
+mainStroke.Thickness = 2
+mainStroke.Color = Color3.fromRGB(255, 182, 193)
+local mainGradient = Instance.new("UIGradient", mainFrame)
+mainGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 240, 245)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 182, 193))
+})
+mainGradient.Rotation = 90
+
+-- Hacer draggable la GUI
+local function makeDraggable(frame)
+    local dragging, dragInput, dragStart, startPos
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+makeDraggable(mainFrame)
+
+-- Botón de cierre "X"
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 5)
+closeButton.Text = "X"
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextSize = isMobile and 14 or 18
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+closeButton.TextColor3 = Color3.new(1, 1, 1)
+closeButton.Parent = mainFrame
+local closeCorner = Instance.new("UICorner", closeButton)
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeButton.Activated:Connect(function()
+    screenGui:Destroy()
+end)
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -20, 0, 40)
+title.Position = UDim2.new(0, 10, 0, 10)
+title.Text = "Custom Script GUI"
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.fromRGB(200, 200, 200)
+title.TextSize = isMobile and 16 or 22
+title.BackgroundTransparency = 1
+title.Parent = mainFrame
+
+-- Contenedor de contenido
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, -20, 1, -70)
+contentFrame.Position = UDim2.new(0, 10, 0, 60)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+local contentLayout = Instance.new("UIListLayout", contentFrame)
+contentLayout.Padding = UDim.new(0, isMobile and 4 or 8)
+contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Marco para ingreso de la key
+local keyFrame = Instance.new("Frame")
+keyFrame.Size = UDim2.new(1, 0, 0, isMobile and 30 or 40)
+keyFrame.BackgroundTransparency = 1
+keyFrame.LayoutOrder = 1
+keyFrame.Parent = contentFrame
+
+local keyLabel = Instance.new("TextLabel")
+keyLabel.Size = UDim2.new(0.3, 0, 1, 0)
+keyLabel.Text = "Key:"
+keyLabel.TextColor3 = Color3.new(1, 1, 1)
+keyLabel.Font = Enum.Font.Gotham
+keyLabel.TextSize = isMobile and 12 or 14
+keyLabel.BackgroundTransparency = 1
+keyLabel.Parent = keyFrame
+
+local keyTextbox = Instance.new("TextBox")
+keyTextbox.Size = UDim2.new(0.45, 0, 1, 0)
+keyTextbox.Position = UDim2.new(0.3, 0, 0, 0)
+keyTextbox.Text = ""
+keyTextbox.PlaceholderText = "Enter key / Ingresa la clave"
+keyTextbox.Font = Enum.Font.Gotham
+keyTextbox.TextSize = isMobile and 12 or 14
+keyTextbox.TextColor3 = Color3.new(0, 0, 0)
+keyTextbox.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+keyTextbox.ClearTextOnFocus = false
+local keyTextboxCorner = Instance.new("UICorner", keyTextbox)
+keyTextboxCorner.CornerRadius = UDim.new(0, 6)
+keyTextbox.Parent = keyFrame
+
+local activateKeyButton = Instance.new("TextButton")
+activateKeyButton.Size = UDim2.new(0.2, 0, 1, 0)
+activateKeyButton.Position = UDim2.new(0.75, 0, 0, 0)
+activateKeyButton.Text = "Activate Key"
+activateKeyButton.Font = Enum.Font.GothamMedium
+activateKeyButton.TextSize = isMobile and 12 or 16
+activateKeyButton.TextColor3 = Color3.new(1, 1, 1)
+activateKeyButton.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+activateKeyButton.Parent = keyFrame
+local activateKeyCorner = Instance.new("UICorner", activateKeyButton)
+activateKeyCorner.CornerRadius = UDim.new(0, 6)
+
+activateKeyButton.Activated:Connect(function()
+    if keyTextbox.Text == "" then
+        warn("EN: Please enter the key. / ES: Por favor ingresa la clave.")
+        return
+    end
+    if keyTextbox.Text ~= "VangelSucks" then
+        warn("EN: Invalid key. / ES: Clave inválida.")
+        return
+    end
+    keyActivated = true
+    keyTextbox.TextEditable = false
+    activateKeyButton.Text = "Key Activated / Clave activada"
+    activateKeyButton.Active = false
+    print("Key activated successfully.")
+end)
+
+-- Aviso bilingüe
+local infoLabel = Instance.new("TextLabel")
+infoLabel.Size = UDim2.new(1, 0, 0, isMobile and 20 or 25)
+infoLabel.BackgroundTransparency = 1
+infoLabel.LayoutOrder = 2
+infoLabel.Text = "EN: Please enter and activate the key to use the scripts. | ES: Por favor ingresa y activa la clave para usar los scripts."
+infoLabel.Font = Enum.Font.Gotham
+infoLabel.TextSize = isMobile and 10 or 12
+infoLabel.TextColor3 = Color3.new(1, 1, 1)
+infoLabel.Parent = contentFrame
+
+local order = 3
+local function createButton(text)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 0, isMobile and 30 or 40)
+    button.Text = text
+    button.Font = Enum.Font.GothamMedium
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.TextSize = isMobile and 12 or 16
+    button.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+    button.AutoButtonColor = false
+    local btnCorner = Instance.new("UICorner", button)
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    local btnStroke = Instance.new("UIStroke", button)
+    btnStroke.Thickness = 1.5
+    btnStroke.Color = Color3.fromRGB(255, 255, 255)
+    local btnGradient = Instance.new("UIGradient", button)
+    btnGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 228, 225)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 182, 193))
+    })
+    btnGradient.Rotation = 90
+    button.MouseEnter:Connect(function()
+        TweenService:Create(btnGradient, TweenInfo.new(0.2), {Rotation = -90}):Play()
+    end)
+    button.MouseLeave:Connect(function()
+        TweenService:Create(btnGradient, TweenInfo.new(0.2), {Rotation = 90}):Play()
+    end)
+    button.LayoutOrder = order
+    order = order + 1
+    return button
+end
+
+local function checkKey()
+    if not keyActivated then
+        warn("EN: Activate the key first! / ES: ¡Activa la clave primero!")
+        return false
+    end
+    return true
+end
+
+-- Botón: Custom Abilities 🤺 (ejecuta múltiples scripts según el personaje)
+local customAbilitiesButton = createButton("Custom Abilities 🤺")
+customAbilitiesButton.Parent = contentFrame
+customAbilitiesButton.Activated:Connect(function()
+    if not checkKey() then return end
+    if executedScripts.customAbilities then
+        warn("EN: Custom Abilities already activated! / ES: ¡Custom Abilities ya está activo!")
+        return
+    end
+    executedScripts.customAbilities = true
+    print("Executing Custom Abilities script...")
+
+    -- Obtenemos el character value del jugador desde ReplicatedStorage
+    local displayPlayers = game:GetService("ReplicatedStorage"):WaitForChild("displayPlayers")
+    local playerStats = displayPlayers:FindFirstChild(player.Name):WaitForChild("stats")
+    local characterValue = playerStats:WaitForChild("character")
+    local char = characterValue.Value:lower()
+
+    -- Habilidad de Amy: Hammer Bounce
+    if char == "amy" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Amy’s%20Hammer%20Bounce"))()
+    end
+
+    -- Habilidad de Cream: Glide (link corregido)
+    if char == "cream" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Cream's%20Glide"))()
+    end
+
+    -- Habilidades de Knuckles (dos scripts)
+    if char == "knuckles" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Knuckles’%20Climb"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Knuckles’%20Punch%20Impulse"))()
+    end
+
+    -- Habilidad de Rouge: Glide
+    if char == "rouge" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Rouge's%20Glide"))()
+    end
+
+    -- Habilidad de Sally: Roll
+    if char == "sally" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Sally’s%20Roll"))()
+    end
+
+    -- Habilidad de Shadow: Dash
+    if char == "shadow" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Shadow’s%20Dash"))()
+    end
+
+    -- Normal Sonic F se ejecuta siempre (no requiere character value)
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Normal%20Sonic%20F"))()
+end)
+
+-- Botón: Custom Map GUI 🌎
+local customMapGUIButton = createButton("Custom Map GUI 🌎")
+customMapGUIButton.Parent = contentFrame
+customMapGUIButton.Activated:Connect(function()
+    if not checkKey() then return end
+    if executedScripts.customMapGUI then
+        warn("EN: Custom Map GUI already active! / ES: ¡Custom Map GUI ya está activo!")
+        return
+    end
+    executedScripts.customMapGUI = true
+    print("Executing Custom Map GUI script...")
+
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/main/Custom%20Maps%20GUI"))()
+end)
+
+-- Botón: Normal Sonic Skin 🦔
+local normalSonicSkinButton = createButton("Normal Sonic Skin 🦔")
+normalSonicSkinButton.Parent = contentFrame
+normalSonicSkinButton.Activated:Connect(function()
+    if not checkKey() then return end
+    if executedScripts.normalSonicSkin then
+        warn("EN: Normal Sonic Skin already active! / ES: ¡Normal Sonic Skin ya está activo!")
+        return
+    end
+    executedScripts.normalSonicSkin = true
+    print("Executing Normal Sonic Skin script...")
+
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/main/Normal%20Sonic%20Skin%20Client%20Side"))()
+end)
+
+-- Botón: Silver Spam’s GUI 💙 (sólo si el personaje es "silver")
+local silverSpamGUIButton = createButton("Silver Spam’s GUI 💙")
+silverSpamGUIButton.Parent = contentFrame
+silverSpamGUIButton.Activated:Connect(function()
+    if not checkKey() then return end
+    if executedScripts.silverSpam then
+        warn("EN: Silver Spam’s GUI already active! / ES: ¡Silver Spam’s GUI ya está activo!")
+        return
+    end
+    executedScripts.silverSpam = true
+    print("Executing Silver Spam’s GUI script...")
+
+    local displayPlayers = game:GetService("ReplicatedStorage"):WaitForChild("displayPlayers")
+    local playerStats = displayPlayers:FindFirstChild(player.Name):WaitForChild("stats")
+    local characterValue = playerStats:WaitForChild("character")
+    local char = characterValue.Value:lower()
+
+    if char == "silver" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Silver’s%20Spam"))()
+    else
+        warn("EN: Your character is not Silver! / ES: ¡Tu personaje no es Silver!")
+    end
+end)
+
+-- Botón: Amy’s Hammer GUI 💗 (sólo si el personaje es "amy")
+local amyHammerGUIButton = createButton("Amy’s Hammer GUI 💗")
+amyHammerGUIButton.Parent = contentFrame
+amyHammerGUIButton.Activated:Connect(function()
+    if not checkKey() then return end
+    if executedScripts.amyHammer then
+        warn("EN: Amy’s Hammer GUI already active! / ES: ¡Amy’s Hammer GUI ya está activo!")
+        return
+    end
+    executedScripts.amyHammer = true
+    print("Executing Amy’s Hammer GUI script...")
+
+    local displayPlayers = game:GetService("ReplicatedStorage"):WaitForChild("displayPlayers")
+    local playerStats = displayPlayers:FindFirstChild(player.Name):WaitForChild("stats")
+    local characterValue = playerStats:WaitForChild("character")
+    local char = characterValue.Value:lower()
+
+    if char == "amy" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ang-qw/Sonic.EXE-The-Disaster-Scripts/refs/heads/main/Amy’s%20Hammer"))()
+    else
+        warn("EN: Your character is not Amy! / ES: ¡Tu personaje no es Amy!")
+    end
+end)
+
+local creditsLabel = Instance.new("TextLabel")
+creditsLabel.Size = UDim2.new(1, -20, 0, isMobile and 40 or 50)
+creditsLabel.Position = UDim2.new(0, 10, 1, -(isMobile and 40 or 50))
+creditsLabel.AnchorPoint = Vector2.new(0, 1)
+creditsLabel.BackgroundTransparency = 1
+creditsLabel.Text = "🎀 By Ang 🎀\n🎀 Vangel (helper) 🎀  🎀 OMORI (helper) 🎀\n🎀 Friends and other members 🎀\nDiscord: https://discord.gg/PDsBE8pHeH"
+creditsLabel.TextColor3 = Color3.new(1, 1, 1)
+creditsLabel.Font = Enum.Font.Gotham
+creditsLabel.TextSize = isMobile and 10 or 14
+creditsLabel.TextWrapped = true
+creditsLabel.Parent = mainFrame
