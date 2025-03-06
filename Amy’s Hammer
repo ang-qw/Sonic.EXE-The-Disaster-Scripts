@@ -1,0 +1,99 @@
+if game.PlaceId ~= 14722542056 then return end
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local isMobile = UserInputService.TouchEnabled
+local frameSize = isMobile and UDim2.new(0, 200, 0, 150) or UDim2.new(0, 300, 0, 150)
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AmyHammerGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = frameSize
+mainFrame.Position = UDim2.new(0.05, 0, 0.5, -frameSize.Y.Offset/2)
+mainFrame.BackgroundColor3 = Color3.fromRGB(255,228,225)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.Parent = screenGui
+local mainCorner = Instance.new("UICorner", mainFrame)
+mainCorner.CornerRadius = UDim.new(0, 12)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,30)
+title.Position = UDim2.new(0,0,0,0)
+title.BackgroundTransparency = 1
+title.Text = "Amy Hammer GUI"
+title.Font = Enum.Font.GothamBold
+title.TextSize = isMobile and 14 or 18
+title.TextColor3 = Color3.fromRGB(200,200,200)
+title.Parent = mainFrame
+
+local throwButton = Instance.new("TextButton")
+throwButton.Size = UDim2.new(0.9,0,0,40)
+throwButton.Position = UDim2.new(0.05,0,0.4,0)
+throwButton.Text = "Auto-Throw Hammer 🔨"
+throwButton.Font = Enum.Font.GothamMedium
+throwButton.TextSize = isMobile and 12 or 16
+throwButton.BackgroundColor3 = Color3.fromRGB(255,182,193)
+throwButton.TextColor3 = Color3.new(1,1,1)
+throwButton.Parent = mainFrame
+
+local pickButton = Instance.new("TextButton")
+pickButton.Size = UDim2.new(0.9,0,0,40)
+pickButton.Position = UDim2.new(0.05,0,0.7,0)
+pickButton.Text = "Auto-Pick Hammer 👊🏻"
+pickButton.Font = Enum.Font.GothamMedium
+pickButton.TextSize = isMobile and 12 or 16
+pickButton.BackgroundColor3 = Color3.fromRGB(255,182,193)
+pickButton.TextColor3 = Color3.new(1,1,1)
+pickButton.Parent = mainFrame
+
+local dragging, dragInput, dragStart, startPos
+mainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+		input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+	end
+end)
+mainFrame.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		dragInput = input
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+local function isAmy()
+	local displayPlayers = ReplicatedStorage:WaitForChild("displayPlayers")
+	local playerStats = displayPlayers:FindFirstChild(player.Name)
+	if not playerStats then return false end
+	playerStats = playerStats:WaitForChild("stats")
+	local characterValue = playerStats:WaitForChild("character")
+	return characterValue.Value:lower() == "amy"
+end
+
+throwButton.Activated:Connect(function()
+	if not isAmy() then warn("This script is exclusive for Amy.") return end
+	local abilities = ReplicatedStorage:WaitForChild("remotes"):WaitForChild("abilities")
+	local args1 = { [1] = "hammerThrow" }
+	abilities:FireServer(unpack(args1))
+	local args2 = { [1] = "throwHammer", [2] = Vector3.new(97.82319641113281, 22.794940948486328, 27.974300384521484) }
+	abilities:FireServer(unpack(args2))
+end)
+
+pickButton.Activated:Connect(function()
+	if not isAmy() then warn("This script is exclusive for Amy.") return end
+	local abilities = ReplicatedStorage:WaitForChild("remotes"):WaitForChild("abilities")
+	local args = { [1] = "pickUpHammer" }
+	abilities:FireServer(unpack(args))
+end)
