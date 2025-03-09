@@ -1,0 +1,83 @@
+if not game:IsLoaded() then game.Loaded:Wait() end
+local player = game.Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local displayPlayers = ReplicatedStorage:WaitForChild("displayPlayers")
+local playerStats = displayPlayers:FindFirstChild(player.Name):WaitForChild("stats")
+local characterValue = playerStats:WaitForChild("character")
+if characterValue.Value:lower() ~= "metalsonic" then return end
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+local cooldownTime = 25
+local boostDuration = 3
+local maxSpeed = 55
+local midSpeed = 45
+local midSpeedDuration = 5
+local normalSpeed = 35
+local lastUsed = 0
+local function createUI()
+    local gui = Instance.new("ScreenGui", player:FindFirstChildOfClass("PlayerGui"))
+    gui.Name = "SpeedBoostGUI"
+    local button = Instance.new("ImageButton", gui)
+    button.Size = UDim2.new(0, 80, 0, 80)
+    button.Position = UDim2.new(1, -90, 0, 20)
+    button.BackgroundTransparency = 0.5
+    button.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    button.Image = "rbxassetid://11112625709"
+    button.ScaleType = Enum.ScaleType.Fit
+    local corner = Instance.new("UICorner", button)
+    corner.CornerRadius = UDim.new(0.5, 0)
+    local gradient = Instance.new("UIGradient", button)
+    gradient.Rotation = 45
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(150,150,150))
+    })
+    local cooldownText = Instance.new("TextLabel", button)
+    cooldownText.Size = UDim2.new(1, 0, 1, 0)
+    cooldownText.BackgroundTransparency = 1
+    cooldownText.TextColor3 = Color3.new(1,1,1)
+    cooldownText.TextScaled = true
+    cooldownText.Visible = false
+    cooldownText.Name = "CooldownText"
+    button.MouseButton1Click:Connect(function()
+        if tick() - lastUsed < cooldownTime then return end
+        lastUsed = tick()
+        local initialAnim = Instance.new("Animation")
+        initialAnim.AnimationId = "rbxassetid://16217193477"
+        local initialTrack = humanoid:LoadAnimation(initialAnim)
+        initialTrack:Play()
+        local impulseForce = 20
+        rootPart.Velocity = rootPart.CFrame.LookVector * impulseForce
+        wait(0.2)
+        initialTrack:Stop()
+        local boostAnim = Instance.new("Animation")
+        boostAnim.AnimationId = "rbxassetid://18178432722"
+        local boostTrack = humanoid:LoadAnimation(boostAnim)
+        boostTrack:Play()
+        for i = 1, 10 do
+            humanoid.WalkSpeed = normalSpeed + (maxSpeed - normalSpeed) * (i/10)
+            wait(0.05)
+        end
+        wait(boostDuration)
+        for i = 1, 10 do
+            humanoid.WalkSpeed = maxSpeed - (maxSpeed - midSpeed) * (i/10)
+            wait(0.05)
+        end
+        wait(midSpeedDuration)
+        for i = 1, 10 do
+            humanoid.WalkSpeed = midSpeed - (midSpeed - normalSpeed) * (i/10)
+            wait(0.05)
+        end
+        humanoid.WalkSpeed = normalSpeed
+        boostTrack:Stop()
+        cooldownText.Visible = true
+        for i = cooldownTime, 1, -1 do
+            cooldownText.Text = tostring(i)
+            wait(1)
+        end
+        cooldownText.Visible = false
+    end)
+end
+createUI()
+player.CharacterAdded:Connect(function() wait(2) createUI() end)
